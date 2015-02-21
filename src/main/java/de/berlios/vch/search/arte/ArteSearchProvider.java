@@ -6,8 +6,11 @@ import java.net.URLEncoder;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.Requires;
+import org.jsoup.nodes.Element;
 import org.osgi.framework.ServiceException;
 
+import de.berlios.vch.http.client.HttpUtils;
+import de.berlios.vch.parser.HtmlParserUtils;
 import de.berlios.vch.parser.IOverviewPage;
 import de.berlios.vch.parser.IVideoPage;
 import de.berlios.vch.parser.IWebPage;
@@ -75,7 +78,11 @@ public class ArteSearchProvider implements ISearchProvider {
     @Override
     public IWebPage parse(IWebPage page) throws Exception {
         if (page instanceof IVideoPage) {
-            parser.parse(page);
+            String content = HttpUtils.get(page.getUri().toString(), null, CHARSET);
+            Element videoContainer = HtmlParserUtils.getTag(content, "div[arte_vp_url]");
+            String videoUri = videoContainer.attr("arte_vp_url");
+            ((IVideoPage) page).setVideoUri(new URI(videoUri));
+            page = parser.parse(page);
         }
         return page;
     }
